@@ -25,6 +25,7 @@
     in
     {
       # Development environment output
+      devShells= {
       default = forAllSystems ({ pkgs }: {
         default =
           let
@@ -43,4 +44,5 @@
           };
       });
     };
+};
 }
