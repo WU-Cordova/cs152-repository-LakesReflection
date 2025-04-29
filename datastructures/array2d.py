@@ -38,11 +38,11 @@ class Array2D(IArray2D[T]):
         flat_start = []
         self.__num_columns= columns or len(starting_sequence[0])
         self.__num_rows = len(starting_sequence)
-        for i,list in enumerate(starting_sequence):
+        for list in starting_sequence:
             if len(list) != self.__num_columns:
                 raise IndexError
             flat_start += list
-            self.i=self.Row(row_index=i,num_columns=self.__num_columns,array=self.__carrnal) ## is array argue a pointer?
+             ## is array argue a pointer?
             #im not sure Row even should be an object rather than a wrapper function
             #i think this how I should do this? Its better than instating @ get call I think
             # cause Row shouldn't really be holding any data, so theyre tiny?
@@ -58,7 +58,7 @@ class Array2D(IArray2D[T]):
     def __getitem__(self, row_index: int) -> Array2D.IRow[T]:
         if row_index> self.__num_rows:
             raise IndexError
-        return self[row_index]
+        return self.Row(row_index=row_index, array = self.__carrnal, num_columns=self.__num_columns)
     def __iter__(self) -> Iterator[Sequence[T]]: 
        return self.__carrnal 
     def __reversed__(self):
