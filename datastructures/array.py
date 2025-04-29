@@ -21,13 +21,12 @@ from datastructures.iarray import IArray, T
 #clears better cause @ least that will be garbage collected
 #but pop and delete kind just ask nicely to not ask delted data
 class Array(IArray[T]):  
-
-    def __init__(self, starting_sequence: Sequence[T]=[], data_type: type=object, length=None) -> None:
+    def __init__(self, starting_sequence: Sequence[T]=[], data_type: type=object) -> None:
         if type(data_type)==None or not isinstance(starting_sequence, Sequence):
             raise ValueError
         self.__data_type=data_type
         self.__item_count=len(starting_sequence)
-        self.__space=length or 2**((len(bin((self.__item_count )-bool(self.__item_count))))-2)
+        self.__space=2**((len(bin((self.__item_count )-bool(self.__item_count))))-2)
         self.__slice = slice(None)
         self.__items = np.empty(self.__space,dtype=data_type)
         ## -3 for leading 0b and to account for 2=2^1 rather than 2^0
@@ -36,14 +35,13 @@ class Array(IArray[T]):
                 raise TypeError
             self[index] = deepcopy(starting_sequence[index])
 
-    def change_size(self, shrink = False, force=False) -> None:
-        self.__item_count+=1-(2*int(shrink)) #
-        if shrink and ((self.__item_count*4 < (self.__space))or force):
+    def change_size(self, shrink = False, amount=1) -> None:
+        self.__item_count+=(1-(2*int(shrink)))*amount
+        while shrink and (self.__item_count*4 < (self.__space)):
             self.__space = self.__space<<1
-            self.__items=self.copy_items()
-        elif (self.__item_count == self.__space) or force:
-            self.__space = self.__space>>1
-            self.__items=self.copy_items()
+        while (not shrink) and (self.__item_count >= self.__space):
+            self.__space = self.__space>>1        
+        self.__items=self.copy_items()
         gc.collect()# being overly safe
 
     def copy_items (self) -> NDArray:
@@ -154,7 +152,7 @@ class Array(IArray[T]):
         return any(i==item for i in self)
     
     def clear(self) -> None:
-        # doesn't call __change_size__ cause its meant for incremental changes
+        # could call change size but why?
         self.__space=0
         self.__item_count=0
         self.__items=np.empty(0, self.__data_type)
