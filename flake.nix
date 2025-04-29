@@ -25,8 +25,7 @@
     in
     {
       # Development environment output
-      devShells= {
-      default = forAllSystems ({ pkgs }: {
+      devShells = forAllSystems ({ pkgs }: {
         default =
           let
             # Use Python 3.11
@@ -37,12 +36,11 @@
             packages = [
               # Python plus helper tools
               (python.withPackages (ps: with ps; [
-                virtualenv # Virtualenv
-                pip # The pip installer
+                pytest
+                numpy
               ]))
             ];
           };
       });
     };
-};
 }

@@ -10,96 +10,155 @@ from collections.abc import Sequence
 import os
 from typing import Any, Iterator, overload
 import numpy as np
+import gc
 from numpy.typing import NDArray
 from copy import deepcopy
 from datastructures.iarray import IArray, T
 
 #some of this can just be done in numpy but since its a data structures class I will try to avoid using other ppls implemtations.
+
+#Pop and delete and clear dont actually delte data, which is bad
+#clears better cause @ least that will be garbage collected
+#but pop and delete kind just ask nicely to not ask delted data
 class Array(IArray[T]):  
 
-    def __init__(self, starting_sequence: Sequence[T]=[], data_type: type=object) -> None:
+    def __init__(self, starting_sequence: Sequence[T]=[], data_type: type=object, length=None) -> None:
         if type(data_type)==None or not isinstance(starting_sequence, Sequence):
             raise ValueError
         self.__data_type=data_type
         self.__item_count=len(starting_sequence)
-        self.__items = np.empty(
-            2**((len(bin((self.__item_count )-bool(self.__item_count))))-2), 
-            # -2 is to drop leading 0b, cast item count to bool to make 0 special case, elsewise subtracts 1 so minimun array size is achieved (which is also a power of two).
-            dtype=data_type)
+        self.__space=length or 2**((len(bin((self.__item_count )-bool(self.__item_count))))-2)
+        self.__slice = slice(None)
+        self.__items = np.empty(self.__space,dtype=data_type)
         ## -3 for leading 0b and to account for 2=2^1 rather than 2^0
         for index in range(self.__item_count):
             if not isinstance(starting_sequence[index], self.__data_type):
                 raise TypeError
-            self.__setitem__(index,deepcopy(starting_sequence[index]))
+            self[index] = deepcopy(starting_sequence[index])
+
+    def change_size(self, shrink = False, force=False) -> None:
+        self.__item_count+=1-(2*int(shrink)) #
+        if shrink and ((self.__item_count*4 < (self.__space))or force):
+            self.__space = self.__space<<1
+            self.__items=self.copy_items()
+        elif (self.__item_count == self.__space) or force:
+            self.__space = self.__space>>1
+            self.__items=self.copy_items()
+        gc.collect()# being overly safe
+
+    def copy_items (self) -> NDArray:
+        #bad way to do this need 2.5* size of array in memory but idk better way
+        # also deep copy?
+        temparr = np.empty(self.__space,dtype=self.__data_type)
+        np.copyto(temparr,self.__items)
+        return (temparr)
+
+
     @overload
-    def __getitem__(self, index: int) -> T:  
-        if abs(index) >= self.__item_count -1:
-            raise IndexError
-        Item =self.__items[index]
-        return Item.item() if isinstance(Item, np.generic) else Item
+    def __getitem__(self, index: int) -> T:  ...
     @overload
-    def __getitem__(self, index: slice) -> Sequence[T]: # G
-        cur = index.start or 0
-        end = index.stop or (self.__item_count)-1
-        step = index.step or 1
-        items = []
-        while (cur != end):
-            items.append(self.__getitem__(cur))
-            cur += step
-        return items
+    def __getitem__(self, index: slice) -> Sequence[T]:  ...
+
     def __getitem__(self, index: int | slice) -> T | Sequence[T]:
-        if not isinstance(index, (int, slice)):
-            raise TypeError
-        pass            
+        match index:
+            case int():
+                self.__check_index(index)
+                if index < 0:
+                    index = self.__item_count - index
+                Item =self.__items[index]
+                return Item.item() if isinstance(Item, np.generic) else Item
+            case slice():
+                self.__check_index(index.stop)
+                if index.start:
+                    self.__check_index(index.start) 
+                self.__slice = index
+                return Array(list(self))
+            case _:
+                raise TypeError
+
+    def __check_index(self, index):
+        if abs(index + int(index >= 0)) > len(self):
+            raise IndexError 
+
+    def __iter__(self):
+        index = self.__slice
+        self.__slice = slice(None)
+        end = index.stop or (self.__item_count)
+        curpos = index.start or 0 + (end<0)*(self.__item_count -1)
+        step = index.step or (1-2*int(curpos >= end))
+        assert step * (1-(2*int(curpos >= end))) > 0, print(curpos,step,end)
+        end -= (end - curpos) % step
+        print(curpos,step,end)
+        while curpos != end:
+            yield self.__items[curpos] 
+            curpos += step
 
     def __setitem__(self, index: int, item: T) -> None: 
-        if not isinstance(item, self.__data_type):
+        #TODO convert to try expect
+        if not isinstance(item,self.__data_type):
             raise TypeError
-     #   if self.__item_count <= abs(index):
-    #        raise IndexError    
+        if abs(index) > self.__item_count- int(index > 0):
+            raise IndexError
         self.__items[index] = item
+        return
+
     def append(self, data: T) -> None:
-        raise NotImplementedError('Append not implemented.')
+        self.change_size(shrink=False)
+        self[-1]=data
 
     def append_front(self, data: T) -> None:
-        raise NotImplementedError('Append front not implemented.')
+        self.change_size(shrink=False)
+        for i, val in enumerate(self):
+            self[i]=data
+            data = val  
+    
 
-    def pop(self) -> None:
-        raise NotImplementedError('Pop not implemented.')
+
+    def pop(self) -> T:
+        # diffrent from delete, no loop overhead + return vaule
+        popped = self[-1]
+        # the self setter would throw type error
+        self.change_size(shrink=True)
+        return(popped)
     
     def pop_front(self) -> None:
-        raise NotImplementedError('Pop front not implemented.')
-
+        popped=self[0]
+        self.__delitem__(0) # calls change_size
+        return popped
+    
     def __len__(self) -> int: 
         return self.__item_count
+    
     def __eq__(self, other: object) -> bool:
-        ##shape checking before hand
-        return(isinstance( other,type(self.__items)) and len(other)==len(self.__items) and bool (np.bitwise_xor(self.__items,other))) 
-    def __iter__(self) -> Iterator[T]:
-        self._curpos=self.__item_count
-        return self
-    def __next__(self):
-        if self._curpos > 0:
-            nxtVal = self.__getitem__(self._curpos)
-            self._curpos -= 1
-            return nxtVal
-        raise StopIteration
-    def __reversed__(self) -> Iterator[T]:
-        raise NotImplementedError('Reversed not implemented.')
-
-    def __delitem__(self, index: int) -> None:
-        raise NotImplementedError('Delete not implemented.')
-
-    def __contains__(self, item: Any) -> bool:
-        if type(item) != self.__data_type: #shortcircuit diffrent types contain diffrent things 3.0 != 3
-            return False
-        for i in self:
-            if i == item:
-                return True
+        #TODO swap to xor 
+        if type(other) ==type(self) and len(other)==self.__item_count:
+        ##shape checking before hand 
+            return all(val == self[i] for i,val in enumerate(other))
         return False
     
+
+    def __reversed__(self) -> Iterator[T]:
+        self.__slice = slice(-1,-1,0) 
+        #hacky but should work unless theres a case where reverse is called but not intilized?
+        return self
+
+    def __delitem__(self, index: int) -> None: # not done with pop cause that calls change size
+        while index < len(self)-2:
+            self[index] = self[index+1]
+            index +=1
+        self.pop()
+
+    def __contains__(self, item: Any) -> bool:
+        if not isinstance(item,self.__data_type): #shortcircuit diffrent types contain diffrent things 3.0 != 3
+            return False
+        return any(i==item for i in self)
+    
     def clear(self) -> None:
-        self = self.__init__([],self.__data_type)
+        # doesn't call __change_size__ cause its meant for incremental changes
+        self.__space=0
+        self.__item_count=0
+        self.__items=np.empty(0, self.__data_type)
+        self.__slice = slice(0)
 
     def __str__(self) -> str:
         return '[' + ', '.join(str(item) for item in self) + ']'
