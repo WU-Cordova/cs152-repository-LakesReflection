@@ -26,10 +26,11 @@ class Array(IArray[T]):
             raise ValueError
         self.__data_type=data_type
         self.__item_count=len(starting_sequence)
-        self.__space=2**(len(bin(self.__item_count))-3)     
+        print(self.__item_count)
+        self.__space=2**(len(bin(self.__item_count))-2) or 1
+        print(self.__space, "space", starting_sequence)
         self.__slice = slice(None)
-        self.__items = np.empty(self.__space,dtype=data_type) #empty keeps causing headaches
-        ## -3 for leading 0b and to account for 2=2^1 rather than 2^0
+        self.__items = np.empty(self.__space,dtype=data_type)        ## -3 for leading 0b and to account for 2=2^1 rather than 2^0
         for index in range(self.__item_count):
             if not isinstance(starting_sequence[index], self.__data_type):
                 raise TypeError
@@ -40,7 +41,7 @@ class Array(IArray[T]):
         if shrink and (self.__item_count*4 < (self.__space)):
             self.__space >>= 1
             self.__items=self.__copy_items()
-        if (not shrink) and (self.__item_count == self.__space):
+        if (not shrink) and (self.__item_count >= self.__space):
             self.__space <<=1
             self.__items=self.__copy_items()
         gc.collect()# being overly safe
@@ -48,7 +49,6 @@ class Array(IArray[T]):
     def __copy_items (self) -> NDArray:
         #bad way to do this need 2.5* size of array in memory but idk better way
         # also deep copy?
-        print(self.__items, "precopy")
         temparr = np.empty(self.__space,dtype=self.__data_type)
         np.copyto(temparr,self.__items)
         return (temparr)
