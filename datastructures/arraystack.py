@@ -11,7 +11,6 @@ class ArrayStack(IStack[T]):
         self.data_type= data_type
         self._top = 0
         self.__carrnal = Array(data_type=data_type)
-        print("length of init array",len(self.__carrnal))
     def push(self, item: T) -> None:
         if not (isinstance(item,self.data_type)):
             raise ValueError
