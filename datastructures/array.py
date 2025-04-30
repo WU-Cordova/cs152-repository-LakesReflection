@@ -38,10 +38,10 @@ class Array(IArray[T]):
     def __change_size(self, shrink = False) -> None:
         self.__item_count+=(1-(2*int(shrink)))
         if shrink and (self.__item_count*4 < (self.__space)):
-            self.__space = self.__space>>1
+            self.__space >>= 1
             self.__items=self.__copy_items()
         if (not shrink) and (self.__item_count == self.__space):
-            self.__space = self.__space<<1
+            self.__space <<=1
             self.__items=self.__copy_items()
         gc.collect()# being overly safe
 
@@ -49,7 +49,7 @@ class Array(IArray[T]):
         #bad way to do this need 2.5* size of array in memory but idk better way
         # also deep copy?
         print(self.__items, "precopy")
-        temparr = np.empty(self.__space or 1,dtype=self.__data_type)
+        temparr = np.empty(self.__space,dtype=self.__data_type)
         np.copyto(temparr,self.__items)
         return (temparr)
 
