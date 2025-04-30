@@ -12,7 +12,7 @@ from typing import Any, Iterator, overload
 import numpy as np
 import gc
 from numpy.typing import NDArray
-from copy import deepcopy
+from copy import Error, deepcopy
 from datastructures.iarray import IArray, T
 
 #some of this can just be done in numpy but since its a data structures class I will try to avoid using other ppls implemtations.
@@ -26,31 +26,30 @@ class Array(IArray[T]):
             raise ValueError
         self.__data_type=data_type
         self.__item_count=len(starting_sequence)
-        print(self.__item_count)
         self.__space=2**(len(bin(self.__item_count))-2) or 1
-        print(self.__space, "space", starting_sequence)
         self.__slice = slice(None)
-        self.__items = np.empty(self.__space,dtype=data_type)        ## -3 for leading 0b and to account for 2=2^1 rather than 2^0
-        for index in range(self.__item_count):
-            if not isinstance(starting_sequence[index], self.__data_type):
-                raise TypeError
-            self[index] = deepcopy(starting_sequence[index])
+        if not all(isinstance(i,data_type) for i in starting_sequence):
+            raise TypeError
+        print(starting_sequence, "start")
+        self.__items = self.__copy_items(starting_sequence)
+        ## -3 for leading 0b and to account for 2=2^1 rather than 2^0
+
 
     def __change_size(self, shrink = False) -> None:
         self.__item_count+=(1-(2*int(shrink)))
         if shrink and (self.__item_count*4 < (self.__space)):
             self.__space >>= 1
-            self.__items=self.__copy_items()
+            self.__items=self.__copy_items(self.__items)
         if (not shrink) and (self.__item_count >= self.__space):
             self.__space <<=1
-            self.__items=self.__copy_items()
+            self.__items=self.__copy_items(self.__items)
         gc.collect()# being overly safe
 
-    def __copy_items (self) -> NDArray:
-        #bad way to do this need 2.5* size of array in memory but idk better way
-        # also deep copy?
-        temparr = np.empty(self.__space,dtype=self.__data_type)
-        np.copyto(temparr,self.__items)
+    def __copy_items (self,source) -> NDArray:
+        temparr = np.empty(self.__space,dtype=self.__data_type) 
+        for index in range(self.__item_count):
+            print("source",source)
+            temparr = deepcopy(source[index])
         return (temparr)
 
 
@@ -102,8 +101,10 @@ class Array(IArray[T]):
         return
 
     def append(self, data: T) -> None:
-         self.__change_size(shrink=False)
-         self[self.__item_count-1]=data
+        print(self.__item_count, self.__space, self.__items, "pre")
+        self.__change_size(shrink=False)
+        print(self.__item_count, self.__space, self.__items, "post")
+        self.__items[self.__item_count-1]=data
 
     def append_front(self, data: T) -> None:
         self.__change_size(shrink=False)

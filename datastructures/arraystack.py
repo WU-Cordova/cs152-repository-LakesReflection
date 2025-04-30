@@ -1,5 +1,4 @@
 import os
-
 from datastructures.array import Array, T
 from datastructures.istack import IStack
 
@@ -18,13 +17,13 @@ class ArrayStack(IStack[T]):
             self.__carrnal.append(item)
 
     def pop(self) -> T:
-        if not self.empty:
-            return self.__carrnal.pop()
+        return self.__carrnal.pop()
     
     def clear(self) -> None:
-        self.__carrnal.clear()    
+        pass
     @property
     def peek(self) -> T:
+        pass
         return self.__carrnal[len(self.__carrnal)-1]
         
     @property
@@ -57,6 +56,7 @@ class ArrayStack(IStack[T]):
     def empty(self) -> bool:
         return bool(self.__carrnal)
     def __eq__(self, other: object) -> bool:
+        pass
         if self.max_size != other.max_size:
             return False
         if self.__carrnal != other._carrnal: # this only works if both are echo stacks
@@ -67,6 +67,7 @@ class ArrayStack(IStack[T]):
         return len(self.__carrnal)
     
     def __contains__(self, item: T) -> bool:
+        pass
         return any(checked==item for checked in self.__carrnal)
 
     def __str__(self) -> str:
