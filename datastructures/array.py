@@ -26,8 +26,7 @@ class Array(IArray[T]):
             raise ValueError
         self.__data_type=data_type
         self.__item_count=len(starting_sequence)
-        self.__space=2**((len(bin((self.__item_count )-bool(self.__item_count))))-2) or 1
-        # or 1  very important cause empty arrays are turned into scalar vaules
+        self.__space=2**(len(bin(self.__item_count))-3)     
         self.__slice = slice(None)
         self.__items = np.empty(self.__space,dtype=data_type) #empty keeps causing headaches
         ## -3 for leading 0b and to account for 2=2^1 rather than 2^0
@@ -50,7 +49,7 @@ class Array(IArray[T]):
         #bad way to do this need 2.5* size of array in memory but idk better way
         # also deep copy?
         print(self.__items, "precopy")
-        temparr = np.empty((1,self.__space),dtype=self.__data_type)
+        temparr = np.empty(self.__space or 1,dtype=self.__data_type)
         np.copyto(temparr,self.__items)
         return (temparr)
 
@@ -103,10 +102,8 @@ class Array(IArray[T]):
         return
 
     def append(self, data: T) -> None:
-        self.__items[self.__item_count]=data #since 0 index this outside, also since change_size
-        self.__change_size(shrink=False)      # increments then checks this should always be safe, and scales
-                                                # as soon as the max is hit not when n+1 space is requested
-
+         self.__change_size(shrink=False)
+         self[self.__item_count-1]=data
 
     def append_front(self, data: T) -> None:
         self.__change_size(shrink=False)

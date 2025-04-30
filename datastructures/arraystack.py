@@ -10,7 +10,7 @@ class ArrayStack(IStack[T]):
         self.max_size = max_size
         self.data_type= data_type
         self._top = 0
-        self.__carrnal = Array(data_type=data_type)
+        self.__carrnal = Array([],data_type=data_type)
     def push(self, item: T) -> None:
         if not (isinstance(item,self.data_type)):
             raise ValueError
