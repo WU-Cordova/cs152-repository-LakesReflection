@@ -28,23 +28,24 @@ class Array(IArray[T]):
         self.__item_count=len(starting_sequence)
         self.__space=2**((len(bin((self.__item_count )-bool(self.__item_count))))-2)
         self.__slice = slice(None)
-        self.__items = np.empty(self.__space,dtype=data_type)
+        self.__items = np.empty(self.__space,dtype=data_type) #empty keeps causing headaches
         ## -3 for leading 0b and to account for 2=2^1 rather than 2^0
         for index in range(self.__item_count):
             if not isinstance(starting_sequence[index], self.__data_type):
                 raise TypeError
             self[index] = deepcopy(starting_sequence[index])
 
-    def change_size(self, shrink = False, amount=1) -> None:
-        self.__item_count+=(1-(2*int(shrink)))*amount
-        while shrink and (self.__item_count*4 < (self.__space)):
-            self.__space = self.__space<<1
-        while (not shrink) and (self.__item_count >= self.__space):
-            self.__space = self.__space>>1        
-        self.__items=self.copy_items()
+    def __change_size(self, shrink = False) -> None:
+        self.__item_count+=(1-(2*int(shrink)))
+        if shrink and (self.__item_count*4 < (self.__space)):
+            self.__space = self.__space//2
+            self.__items=self.__copy_items()
+        if (not shrink) and (self.__item_count >= self.__space):
+            self.__space = self.__space*2
+            self.__items=self.__copy_items()
         gc.collect()# being overly safe
 
-    def copy_items (self) -> NDArray:
+    def __copy_items (self) -> NDArray:
         #bad way to do this need 2.5* size of array in memory but idk better way
         # also deep copy?
         temparr = np.empty(self.__space,dtype=self.__data_type)
@@ -62,7 +63,7 @@ class Array(IArray[T]):
             case int():
                 self.__check_index(index)
                 if index < 0:
-                    index = self.__item_count - index
+                    index = self.__item_count + index
                 Item =self.__items[index]
                 return Item.item() if isinstance(Item, np.generic) else Item
             case slice():
@@ -86,7 +87,6 @@ class Array(IArray[T]):
         step = index.step or (1-2*int(curpos >= end))
         assert step * (1-(2*int(curpos >= end))) > 0, print(curpos,step,end)
         end -= (end - curpos) % step
-        print(curpos,step,end)
         while curpos != end:
             yield self.__items[curpos] 
             curpos += step
@@ -101,11 +101,13 @@ class Array(IArray[T]):
         return
 
     def append(self, data: T) -> None:
-        self.change_size(shrink=False)
-        self[-1]=data
+        self.__items[self.__item_count]=data
+        self.__change_size(shrink=False)
+          
+
 
     def append_front(self, data: T) -> None:
-        self.change_size(shrink=False)
+        self.__change_size(shrink=False)
         for i, val in enumerate(self):
             self[i]=data
             data = val  
@@ -116,7 +118,7 @@ class Array(IArray[T]):
         # diffrent from delete, no loop overhead + return vaule
         popped = self[-1]
         # the self setter would throw type error
-        self.change_size(shrink=True)
+        self.__change_size(shrink=True)
         return(popped)
     
     def pop_front(self) -> None:
