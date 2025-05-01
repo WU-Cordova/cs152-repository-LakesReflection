@@ -53,6 +53,7 @@ class Array2D(IArray2D[T]):
                 raise ValueError
             flat_start= flat_start + alist
         self.__carrnal =Array(flat_start, data_type)
+        self.__iRows = Array([self.Row(row_index=i,array=self.__carrnal,num_columns=self.__nCols) for i in range(self.__nRows)],self.Row)
         #checkdata and instainte underlying array before making
         #rows to acess them
              #alternitvely rows can be created lazily, by the get function
@@ -70,7 +71,7 @@ class Array2D(IArray2D[T]):
     def __getitem__(self, row_index: int) -> Array2D.IRow[T]:
         #was going to make this lazy loading,
         #but id need to implement sparse arrays
-        return self.Row(row_index=row_index,array=self.__carrnal,num_columns=self.__nCols)
+        return self.__iRows[row_index]
     def __iter__(self) -> Iterator[Sequence[T]]:
         #trying not use get in iter
         offset = self.__nCols
