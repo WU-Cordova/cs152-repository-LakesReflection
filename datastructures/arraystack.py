@@ -4,6 +4,7 @@ from datastructures.istack import IStack
 # this is a wildy inefficent implementation but 
 # it does both manage to stay compatiable (proably with all i
 # array implmentations and actually make the stack a fixed size
+
 class ArrayStack(IStack[T]):
     ''' ArrayStack class that implements the IStack interface. The ArrayStack is a 
         fixed-size stack that uses an Array to store the items.'''
