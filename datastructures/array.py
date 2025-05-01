@@ -27,10 +27,8 @@ class Array(IArray[T]):
         self.__data_type=data_type
         self.__item_count=len(starting_sequence)
         self.__space=2**(len(bin(self.__item_count))-2) or 1
-        self.__slice = slice(None)
         if not all(isinstance(i,data_type) for i in starting_sequence):
             raise TypeError
-        print(starting_sequence, "start")
         self.__items = self.__copy_items(starting_sequence)
         ## -3 for leading 0b and to account for 2=2^1 rather than 2^0
 
@@ -48,8 +46,7 @@ class Array(IArray[T]):
     def __copy_items (self,source) -> NDArray:
         temparr = np.empty(self.__space,dtype=self.__data_type) 
         for index in range(self.__item_count):
-            print("source",source)
-            temparr = deepcopy(source[index])
+            temparr[index] = deepcopy(source[index])
         return (temparr)
 
 
@@ -70,43 +67,50 @@ class Array(IArray[T]):
                 self.__check_index(index.stop)
                 if index.start:
                     self.__check_index(index.start) 
-                self.__slice = index
-                return Array(list(self))
+                slicegen=self.__iterGen__(index)
+                return Array(list(slicegen))
             case _:
                 raise TypeError
 
-    def __check_index(self, index):
-        if abs(index + int(index >= 0)) > len(self):
-            raise IndexError 
+
+    def __reversed__(self) -> Iterator[T]:
+        revIter=self.__iterGen__(slice(self.__item_count-1,-1,-1))
+        #hacky but should work unless theres a case where reverse is called but not intilized?
+        return revIter 
 
     def __iter__(self):
-        index = self.__slice
-        self.__slice = slice(None)
+        genobj=self.__iterGen__(slice(self.__item_count))
+        return(genobj)
+   
+    def __iterGen__(self,slice):
+        index = slice
         end = index.stop or (self.__item_count)
         curpos = index.start or 0 + (end<0)*(self.__item_count -1)
         step = index.step or (1-2*int(curpos >= end))
-        assert step * (1-(2*int(curpos >= end))) > 0, print(curpos,step,end)
+        assert step * (1-(2*int(curpos >= end))) > 0, \
+        print("Steps invalid- increases distance to end:","curpos:step:end",curpos,step,end)
         end -= (end - curpos) % step
         while curpos != end:
             yield self.__items[curpos] 
             curpos += step
 
+
+
     def __setitem__(self, index: int, item: T) -> None: 
         #TODO convert to try expect
         if not isinstance(item,self.__data_type):
-            raise TypeError
+            raise TypeError("Arraytype",str(self.__data_type),"can't accept", str(type(item)))
         if abs(index) > self.__item_count- int(index > 0):
             raise IndexError
         self.__items[index] = item
         return
 
     def append(self, data: T) -> None:
-        print(self.__item_count, self.__space, self.__items, "pre")
+        self.__check__item(data)
         self.__change_size(shrink=False)
-        print(self.__item_count, self.__space, self.__items, "post")
         self.__items[self.__item_count-1]=data
 
-    def append_front(self, data: T) -> None:
+    def append_front(self, data: T) -> None: 
         self.__change_size(shrink=False)
         for i, val in enumerate(self):
             self[i]=data
@@ -117,7 +121,6 @@ class Array(IArray[T]):
     def pop(self) -> T:
         # diffrent from delete, no loop overhead + return vaule
         popped = self[-1]
-        # the self setter would throw type error
         self.__change_size(shrink=True)
         return(popped)
     
@@ -137,10 +140,6 @@ class Array(IArray[T]):
         return False
     
 
-    def __reversed__(self) -> Iterator[T]:
-        self.__slice = slice(-1,-1,0) 
-        #hacky but should work unless theres a case where reverse is called but not intilized?
-        return self
 
     def __delitem__(self, index: int) -> None: # not done with pop cause that calls change size
         while index < len(self)-2:
@@ -158,7 +157,15 @@ class Array(IArray[T]):
         self.__space=0
         self.__item_count=0
         self.__items=np.empty(0, self.__data_type)
-        self.__slice = slice(0)
+    
+    def __check_index(self, index):
+        if abs(index + int(index >= 0)) > len(self):
+            raise IndexError 
+
+    def __check__item(self,item): #these are both pretty small but were repeated alot of places.
+       if not isinstance(item,self.__data_type):
+            raise TypeError
+
 
     def __str__(self) -> str:
         return '[' + ', '.join(str(item) for item in self) + ']'
