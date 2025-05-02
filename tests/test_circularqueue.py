@@ -57,7 +57,6 @@ class TestCircularQueue:
             q1.enqueue(i)
             q2.enqueue(i)
         assert q1 == q2
-
         q1.dequeue()
         q1.enqueue(5)
         q2.dequeue()
