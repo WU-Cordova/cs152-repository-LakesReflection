@@ -28,7 +28,6 @@ class Bag(IBag[T]):
 
     def distinct_items(self) -> Iterable[T]:
         return list(self._dict)
-    
     def __contains__(self, item) -> bool:
        return item in self._dict
     def clear(self) -> None:

@@ -2,348 +2,168 @@ from typing import Any
 
 from datastructures.array import Array
 from datastructures.iqueue import IQueue, T
+from copy import Error, deepcopy
+import random
+# <3 <- Totally the intials of Echo Oleary
+#Todo
+#EQ check
+# dummy functions in parent class - east
+#enque instiantiate
+# REPR
+
+'''names =[
+'Yvain', 
+'Urien',
+'Tristan', 
+'Tor',
+'Segwarides', 
+'Sagramore', 
+'Safir',
+'Percival', 
+'Pellinore', 
+'Pelleas',
+'Palamedes', 
+'Morien',
+'Morholt', 
+'Mordred', 
+'Maleagant', 
+'Lucan', 
+'Lionel', 
+'Leodegrance', 
+'Lanval', 
+'Lancelot', 
+'Lamorak', 
+'Kay',
+'Hoel', 
+'Hector de Maris', 
+'Griflet', 
+'Gornemant', 
+'Gingalain', 
+'Geraint', 
+'Gawain', 
+'Gareth', 
+'Galeschin', 
+'Galehault', 
+'Galahad', 
+'Gaheris', 
+'Feirefiz', 
+'Esclabor', 
+'Erec', 
+'Elyan the White', 
+'Ector', 
+'Dinadan', 
+'Daniel von Blumenthal', 
+'Dagonet ',
+'Constantine', 
+'Claudin', 
+'Caradoc' ,
+'Calogrenant', 
+'Cador ',
+'Brunor' ]'''
 
 class CircularQueue(IQueue[T]):
-    """ Represents a fixed-size circular queue. The queue
-        is circular in the sense that the front and rear pointers wrap around the
-        array when they reach the end. The queue is full when the rear pointer is
-        one position behind the front pointer. The queue is empty when the front
-        and rear pointers are equal. This implementation uses a fixed-size array.
-    """
-
     def __init__(self, maxsize: int = 0, data_type=object) -> None:
-        ''' Initializes the CircularQueue object with a maxsize and data_type.
-        
-            Examples:
-                >>> q = CircularQueue(maxsize=5, data_type=int)
-                >>> q.maxsize
-                5
-                >>> q.empty
-                True
-                >>> q.full
-                False
-                >>> q.front
-                IndexError('Queue is empty')
-                >>> q.rear
-                IndexError('Queue is empty')
-
-            Arguments:
-                maxsize: The maximum size of the queue
-                data_type: The type of the elements in the queue
-        '''
-        raise NotImplementedError
-
+        self.__max_size = maxsize        
+      #  self.name= random.choice(names) + str(random.randint(1,99))
+        self.data_type = data_type 
+        self.__bpt = 0
+        self.__fpt=0
+        self.__empty = True
+        self.__carrnal = Array(starting_sequence=[0 for i in range(maxsize)],data_type=data_type)
     def enqueue(self, item: T) -> None:
-        ''' Adds an item to the rear of the queue
-
-            Examples:
-                >>> q = CircularQueue(maxsize=5, data_type=int)
-                >>> q.enqueue(1)
-                >>> q.enqueue(2)
-                >>> q.enqueue(3)
-                >>> q.front
-                1
-                >>> q.rear
-                3
-                >>> q.enqueue(4)
-                >>> q.enqueue(5)
-                >>> q.full
-                True
-                >>> q.enqueue(6)
-                IndexError('Queue is full')
-            
-            Arguments:
-                item: The item to add to the queue
-                
-            Raises:
-                IndexError: If the queue is full
-        '''
-        raise NotImplementedError
-
+        print(self.__repr__(),"grow")
+        if not isinstance(item, self.data_type):
+            raise TypeError
+        self.__empty =False
+        self.__carrnal[self.__bpt] = item
+        self.__bpt =  (self.__bpt + 1) %(self.maxsize) 
     def dequeue(self) -> T:
-        ''' Removes and returns the item at the front of the queue
-
-            Examples:
-                >>> q = CircularQueue(maxsize=5, data_type=int)
-                >>> q.enqueue(1)
-                >>> q.enqueue(2)
-                >>> q.enqueue(3)
-                >>> q.dequeue()
-                1
-                >>> q.dequeue()
-                2
-                >>> q.dequeue()
-                3
-                >>> q.dequeue()
-                IndexError('Queue is empty')
-                >>> q.dequeue()
-                IndexError('Queue is empty')
-
-            Returns:
-                The item at the front of the queue
-
-            Raises:
-                IndexError: If the queue is empty
-        '''
-        raise NotImplementedError
-
+        print(self.__repr__(),"shrink")
+        if self.empty == True :
+            raise BufferError
+        prev = (self.__carrnal[self.__fpt])
+        self.__fpt = (self.__fpt+1) %  (self.maxsize)
+        if self.__fpt == self.__bpt:
+            self.__empty=True
+        return prev
+               
     def clear(self) -> None:
-        ''' Removes all items from the queue 
-        
-            Examples:
-                >>> q = CircularQueue(maxsize=5, data_type=int)
-                >>> q.enqueue(1)
-                >>> q.enqueue(2)
-                >>> q.enqueue(3)
-                >>> q.clear()
-                >>> q.empty
-                True
-                >>> q.front
-                IndexError('Queue is empty')
-                >>> q.rear
-                IndexError('Queue is empty')
-        '''
-        raise NotImplementedError
-
+        self.__fpt = 0
+        self.__bpt = 0
     @property
     def front(self) -> T:
-        ''' Returns the item at the front of the queue without removing it
-
-            Examples:
-                >>> q = CircularQueue(maxsize=5, data_type=int)
-                >>> q.enqueue(1)
-                >>> q.enqueue(2)
-                >>> q.enqueue(3)
-                >>> q.front
-                1
-                >>> q.dequeue()
-                1
-                >>> q.front
-                2
-                >>> q.dequeue()
-                2
-                >>> q.front
-                3
-                >>> q.dequeue()
-                3
-                >>> q.front
-                IndexError('Queue is empty')
-
-            Returns:
-                The item at the front of the queue
-
-            Raises:
-                IndexError: If the queue is empty
-        '''
-        raise NotImplementedError
-
+        if self.empty:
+            raise IndexError
+        return self.__carrnal[self.__fpt] #array should throw index array question mark?
     @property
     def full(self) -> bool:
-        ''' Returns True if the queue is full, False otherwise 
-
-            Examples:
-                >>> q = CircularQueue(maxsize=5, data_type=int)
-                >>> q.full
-                False
-                >>> q.enqueue(1)
-                >>> q.full
-                False
-                >>> q.enqueue(2)
-                >>> q.full
-                False
-                >>> q.enqueue(3)
-                >>> q.full
-                False
-                >>> q.enqueue(4)
-                >>> q.full
-                False
-                >>> q.enqueue(5)
-                >>> q.full
-                True
-                >>> q.dequeue()
-                1
-                >>> q.full
-                False
-                >>> q.dequeue()
-                2
-                >>> q.full
-                False
-                >>> q.dequeue()
-                3
-                >>> q.full
-                False
-                >>> q.dequeue()
-                4
-                >>> q.full
-                False
-                >>> q.dequeue()
-                5
-                >>> q.full
-                False
-        
-            Returns:
-                True if the queue is full, False otherwise
-        '''
-        raise NotImplementedError
-
+        return ((self.__bpt == self.__fpt) and not self.__empty)
     @property
     def empty(self) -> bool:
-        ''' Returns True if the queue is empty, False otherwise
-
-            Examples:
-                >>> q = CircularQueue(maxsize=5, data_type=int)
-                >>> q.empty
-                True
-                >>> q.enqueue(1)
-                >>> q.empty
-                False
-                >>> q.enqueue(2)
-                >>> q.empty
-                False
-                >>> q.enqueue(3)
-                >>> q.empty
-                False
-                >>> q.enqueue(4)
-                >>> q.empty
-                False
-                >>> q.enqueue(5)
-                >>> q.empty
-                False
-                >>> q.dequeue()
-                1
-                >>> q.empty
-                False
-                >>> q.dequeue()
-                2
-                >>> q.empty
-                False
-                >>> q.dequeue()
-                3
-                >>> q.empty
-                False
-                >>> q.dequeue()
-                4
-                >>> q.empty
-                False
-                >>> q.dequeue()
-                5
-                >>> q.empty
-        
-            Returns:
-                True if the queue is empty, False otherwise
-        '''
-        raise NotImplementedError
-    
+        return self.__empty
+        return dog
+          # this relies on throwing an error for full
     @property
     def maxsize(self) -> int:
-        ''' Returns the maximum size of the queue
+        return self.__max_size
 
-            Examples:
-                >>> q = CircularQueue(maxsize=5, data_type=int)
-                >>> q.maxsize
-                5
-
-            Returns:
-                The maximum size of the queue
-        '''
-        raise NotImplementedError
 
     def __eq__(self, other: object) -> bool:
-        ''' Returns True if this CircularQueue is equal to another object, False otherwise
-        
-            Equality is defined as:
-                - The element values at the front and rear pointers are equal
-                - The element values between the front and rear pointers are equal
-                - The maxsize of the queue is equal
-                - The data_type of the queue is equal
-                - Two queues are equal if they have the same elements in the same order, regardless of the index
-                  of the front and rear pointers.
+        if( (not isinstance(other, CircularQueue)) or# self.maxsize != other.maxsize or testing script doesnt like this but outline says max sizes should be eq
+            self.data_type != other.data_type or
+            len(self) != len(other) 
+            ):
+            return False
+        # below func is very expensive so only wanna do when needed
+        bEqual = True
+        copyQ=CircularQueue(data_type=self.data_type, maxsize=self.maxsize)
+        otherCPQ = copyQ
+        while len(self)> 1: 
+            ## straight magic number why 1? no clue
+            # my concern is there is some refrence trickier happening here
+            #like maybe otherCPQ and copyQ r being assigned for whater reason?
+            # or maybe my len function is of some how?
+            # quelog in extra tests has an output 
+            if self.front != other.front:
+                otherCPQ = deepcopy(copyQ) # deepcopy?
+                while len(self) > 1: # this could almost be recursive? i really dont like this setup
+                    otherCPQ.enqueue(other.dequeue())
+                    copyQ.enqueue(self.dequeue())
+                    bEqual= False
+                break
+            copyQ.enqueue(self.dequeue())
+            other.dequeue()
+        other = deepcopy(otherCPQ)
+        #if otherCPQ exists its already deep copied, 
+        #could implent COW by
+        # creating another subclass or modifying the parent class to take copy var
+        # then instead of instaing the array by copying first elem to all spots it would
+        # deepcopy the area only when enque deque or clear are called
+        self = copyQ
+        return bEqual
 
-            Examples:
-                >>> q1 = CircularQueue(maxsize=5, data_type=int)
-                >>> q2 = CircularQueue(maxsize=5, data_type=int)
-                >>> q1 == q2
-                True
-                >>> for i in range(5): q1.enqueue(i)
-                >>> for i in range(5): q2.enqueue(i)
-                >>> q1 == q2
-                True
-                >>> q1.dequeue()
-                0
-                >>> q1 == q2
-                False
-                
-            Arguments:
-                other: The object to compare this CircularQueue to
-                
-            Returns:
-                True if this CircularQueue is equal to another object, False otherwise
-        '''
-        raise NotImplementedError   
-    
+
+    def __str__ (self) -> str:
+        emplist =[]
+        i= deepcopy(self.__fpt)
+        # i want do while :(
+        emplist.append(self.__carrnal[i])
+        i = ((i+1) % (self.maxsize ))
+        while (i != self.__bpt):
+            emplist.append(self.__carrnal[i])
+            i = ((i+1) % (self.maxsize ))
+        return str(emplist)
+
+    def __repr__ (self) -> str:
+        return f'{len(self)} ({self.__fpt}, {self.__bpt}), Q:{str(self)})'
     def __len__(self) -> int:
-        ''' Returns the number of items in the queue
+        if not self.full: # yes i could just keep a length var that would make my life easier
+            return (self.__bpt - self.__fpt )%(self.maxsize)
+        return self.maxsize
+    # prove this but can get myself to inutvitely understand rn
+    # if fpt < bpt, cause this array grows upwards then obvs the distance is just the diffrence
+    # okay but what if bpt < fpt, i.e the pointers have looped?
+    # remeber both of these are in mod maxsize
+    # and taking the mod of neagtive number gives 
+    # a conguernce class thats nessicarly positve and congruent to that neagtive distance
 
-            Examples:
-                >>> q = CircularQueue(maxsize=5, data_type=int)
-                >>> len(q)
-                0
-                >>> q.enqueue(1)
-                >>> len(q)
-                1
-                >>> q.enqueue(2)
-                >>> len(q)
-                2
-                >>> q.enqueue(3)
-                >>> len(q)
-                3
-                >>> q.dequeue()
-                1
-                >>> len(q)
-                2
-                >>> q.dequeue()
-                2
-                >>> len(q)
-                1
-                >>> q.dequeue()
-                3
-                >>> len(q)
-                0
-        
-            Returns:
-                The number of items in the queue
-        '''
-        raise NotImplementedError
-
-    def __str__(self) -> str:
-        ''' Returns a string representation of the CircularQueue
-
-            Examples:
-                >>> q = CircularQueue(maxsize=5, data_type=int)
-                >>> q.enqueue(1)
-                >>> q.enqueue(2)
-                >>> q.enqueue(3)
-                >>> print(q)
-                [1, 2, 3]
-        
-            Returns:
-                A string representation of the queue
-        '''
-        return str(self.circularqueue)
-
-    def __repr__(self) -> str:
-        ''' Returns a developer string representation of the CircularQueue object
-
-            Examples:
-                >>> q = CircularQueue(maxsize=5, data_type=int)
-                >>> q.enqueue(1)
-                >>> q.enqueue(2)
-                >>> q.enqueue(3)
-                >>> repr(q)
-                'ArrayQueue([1, 2, 3])'
-        
-            Returns:
-                A string representation of the CircularQueue object
-        '''
-        return f'ArrayQueue({repr(self.circularqueue)})'
-                                  
