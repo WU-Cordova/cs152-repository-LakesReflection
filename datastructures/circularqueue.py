@@ -11,60 +11,10 @@ import random
 #enque instiantiate
 # REPR
 
-'''names =[
-'Yvain', 
-'Urien',
-'Tristan', 
-'Tor',
-'Segwarides', 
-'Sagramore', 
-'Safir',
-'Percival', 
-'Pellinore', 
-'Pelleas',
-'Palamedes', 
-'Morien',
-'Morholt', 
-'Mordred', 
-'Maleagant', 
-'Lucan', 
-'Lionel', 
-'Leodegrance', 
-'Lanval', 
-'Lancelot', 
-'Lamorak', 
-'Kay',
-'Hoel', 
-'Hector de Maris', 
-'Griflet', 
-'Gornemant', 
-'Gingalain', 
-'Geraint', 
-'Gawain', 
-'Gareth', 
-'Galeschin', 
-'Galehault', 
-'Galahad', 
-'Gaheris', 
-'Feirefiz', 
-'Esclabor', 
-'Erec', 
-'Elyan the White', 
-'Ector', 
-'Dinadan', 
-'Daniel von Blumenthal', 
-'Dagonet ',
-'Constantine', 
-'Claudin', 
-'Caradoc' ,
-'Calogrenant', 
-'Cador ',
-'Brunor' ]'''
 
 class CircularQueue(IQueue[T]):
     def __init__(self, maxsize: int = 0, data_type=object) -> None:
         self.__max_size = maxsize        
-      #  self.name= random.choice(names) + str(random.randint(1,99))
         self.data_type = data_type 
         self.__bpt = 0
         self.__fpt=0
@@ -114,34 +64,13 @@ class CircularQueue(IQueue[T]):
             len(self) != len(other) 
             ):
             return False
-        # below func is very expensive so only wanna do when needed
-        bEqual = True
-        copyQ=CircularQueue(data_type=self.data_type, maxsize=self.maxsize)
-        otherCPQ = copyQ
-        while len(self)> 1: 
-            ## straight magic number why 1? no clue
-            # my concern is there is some refrence trickier happening here
-            #like maybe otherCPQ and copyQ r being assigned for whater reason?
-            # or maybe my len function is of some how?
-            # quelog in extra tests has an output 
-            if self.front != other.front:
-                otherCPQ = deepcopy(copyQ) # deepcopy?
-                while len(self) > 1: # this could almost be recursive? i really dont like this setup
-                    otherCPQ.enqueue(other.dequeue())
-                    copyQ.enqueue(self.dequeue())
-                    bEqual= False
-                break
-            copyQ.enqueue(self.dequeue())
-            other.dequeue()
-        other = deepcopy(otherCPQ)
-        #if otherCPQ exists its already deep copied, 
-        #could implent COW by
-        # creating another subclass or modifying the parent class to take copy var
-        # then instead of instaing the array by copying first elem to all spots it would
-        # deepcopy the area only when enque deque or clear are called
-        self = copyQ
+        bEqual= True
+        for i in range(len(self)):
+            elm = self.dequeue()
+            bEqual = bEqual and (elm == other.front)
+            self.enqueue(elm)
+            other.enqueue(other.dequeue())
         return bEqual
-
 
     def __str__ (self) -> str:
         emplist =[]
@@ -155,7 +84,7 @@ class CircularQueue(IQueue[T]):
         return str(emplist)
 
     def __repr__ (self) -> str:
-        return f'{len(self)} ({self.__fpt}, {self.__bpt}), Q:{str(self)})'
+        return f'({self.__fpt}, {self.__bpt}), Q:{str(self)})'
     def __len__(self) -> int:
         if not self.full: # yes i could just keep a length var that would make my life easier
             return (self.__bpt - self.__fpt )%(self.maxsize)

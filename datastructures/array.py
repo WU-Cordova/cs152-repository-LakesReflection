@@ -61,8 +61,11 @@ class Array(IArray[T]):
                 self.__check_index(index)
                 if index < 0:
                     index = self.__item_count + index
-                Item =self.__items[index]
-                return Item.item() if isinstance(Item, np.generic) else Item
+                Item = self.__items[index]
+                if isinstance(Item, np.generic):
+                    return Item.item()
+                else:
+                    return Item      
             case slice():
                 self.__check_index(index.stop)
                 if index.start:
@@ -91,7 +94,11 @@ class Array(IArray[T]):
         print("Steps invalid- increases distance to end:","curpos:step:end",curpos,step,end)
         end -= (end - curpos) % step
         while curpos != end:
-            yield self.__items[curpos] 
+            Item=self.__items[curpos]
+            if isinstance(Item, np.generic):
+                yield Item.item()
+            else:
+                yield Item 
             curpos += step
 
 

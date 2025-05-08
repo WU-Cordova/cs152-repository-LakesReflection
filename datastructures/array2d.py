@@ -7,7 +7,6 @@ from datastructures.array import Array
 from datastructures.iarray2d import IArray2D, T
 
 
-
 class Array2D(IArray2D[T]):
 
     class Row(IArray2D.IRow[T]):
@@ -21,7 +20,8 @@ class Array2D(IArray2D[T]):
                 raise IndexError
             return self.__array[self.offset + column_index]
         def __setitem__(self, column_index: int, value: T) -> None:
-            self.__array[self.offset + column_index] = value        
+            self.__array[self.offset + column_index] = value    
+            assert(self.__array[self.offset + column_index] ==value)
         def __iter__(self) -> Iterator[T]:
             for i  in  range(self.num_columns):
                 yield self[i]
@@ -32,12 +32,16 @@ class Array2D(IArray2D[T]):
             return self.num_columns
         
         def __str__(self) -> str:
-            return f"[{', '.join([str(self[column_index]) for column_index in range(self.num_columns)])}]"
+            empstring=[]
+            for i in range(self.num_columns):
+                empstring.append(self.__array[i+self.offset])
+            return(str(empstring))
+        
+
+
         
         def __repr__(self) -> str:
             return f'Row {self.row}: [{", ".join([str(self[column_index]) for column_index in range(self.num_columns - 1)])}, {str(self[self.num_columns - 1])}]'
-
-
     def __init__(self, starting_sequence: Sequence[Sequence[T]]=[[]], data_type=object) -> None:
         # forced to add columns as an arg, cause wanna stay compitable with other implemetations so can't edit
         # array, but also like the way Array is implemented it self manages size
@@ -53,8 +57,7 @@ class Array2D(IArray2D[T]):
                 raise ValueError
             flat_start= flat_start + alist
         self.__carrnal =Array(flat_start, data_type)
-        self.__iRows = Array([self.Row(row_index=i,array=self.__carrnal,num_columns=self.__nCols) for i in range(self.__nRows)],self.Row)
-        #checkdata and instainte underlying array before making
+         #checkdata and instainte underlying array before making
         #rows to acess them
              #alternitvely rows can be created lazily, by the get function
     @staticmethod
@@ -69,9 +72,7 @@ class Array2D(IArray2D[T]):
             emp_seq.append(emp_row)
         return Array2D(emp_seq,data_type)
     def __getitem__(self, row_index: int) -> Array2D.IRow[T]:
-        #was going to make this lazy loading,
-        #but id need to implement sparse arrays
-        return self.__iRows[row_index]
+        return self.Row(row_index=row_index,array=self.__carrnal,num_columns=self.__nCols)
     def __iter__(self) -> Iterator[Sequence[T]]:
         #trying not use get in iter
         offset = self.__nCols
@@ -83,7 +84,6 @@ class Array2D(IArray2D[T]):
                 subarray =[]
             subarray.append(val)
         yield subarray
-
     def __reversed__(self):
         #Dont love this implemntation
         for i in range(self.__nRows-1,-1,-1):
