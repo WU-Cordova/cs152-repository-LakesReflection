@@ -7,115 +7,115 @@ NOTE - I used ansi escape charachters alot. It is possible other terminal emulat
 
 
 
-The data flow is kinda weird so heres an explanation and an illustration.
+The data flow is kinda weird so heres an explanation and an illustration. \n
 
-Lets say you have row A,B,and C
-A= x, y, z
-B= e, f, g
-C= u, v, w
+Lets say you have row A,B,and C \n
+A= x, y, z \n
+B= e, f, g \n
+C= u, v, w \n
 
-Each Row must first pass through the Down buffer before its in the up Buffer.
-The Down Buffer iteraviely sums the neghbors and the corsepending vaule to its next iteration.
-Beta stage of Down Buf (Alpha is talked about later)
-So first cycle of the DownBuffer:
-    We start with x as first element.
-    We take the sum of x+y and write that to Downbuffer[0]
-    We then write x to DownBuffer[1]
-Second Cycle:
-ay is focused element.
-We agin sum ay and its right neighbor
-y+z, but we add that to DownBuffer[1]
-Since we wrote x in that spot last cycle,
-this is equivalent to x + y + z
-again write ay to DownBuf[2]
-Last cycle
-DownBuf[2] = az+0(right -neghibor)
+Each Row must first pass through the Down buffer before its in the up Buffer. \n
+The Down Buffer iteraviely sums the neghbors and the corsepending vaule to its next iteration. \n
+Beta stage of Down Buf (Alpha is talked about later) \n
+So first cycle of the DownBuffer: \n
+    We start with x as first element. \n
+    We take the sum of x+y and write that to Downbuffer[0] \n
+    We then write x to DownBuffer[1] \n
+Second Cycle: \n
+ay is focused element. \n
+We agin sum ay and its right neighbor \n
+y+z, but we add that to DownBuffer[1] \n
+Since we wrote x in that spot last cycle, \n
+this is equivalent to x + y + z \n
+again write ay to DownBuf[2] \n
+Last cycle \n
+DownBuf[2] = az+0(right -neghibor) \n
 
-The important thing to note is that DownBuffer
-now contains the sum of itself and its neghbiors, but only within its row
+The important thing to note is that DownBuffer \n
+now contains the sum of itself and its neghbiors, but only within its row \n
 
-UpBuf Is the the sum of a rows downBuf and the row before its downbuf
-So lets say UpBuf currently corrseponds to Row B, and DownBuf Row C
-Upbuf[0] = (x+y)+(e+f)
-DownBuf[0] =(u+v)
-I hope you can see that by adding DownBuf to UpBuf you get the sum of e and its neighbors.
-If all the vaules were just boolean 0 for dead, 1 for alive
-As the Wikipedia article points out this sum tells the state that the cell e should be in.
+UpBuf Is the the sum of a rows downBuf and the row before its downbuf \n
+So lets say UpBuf currently corrseponds to Row B, and DownBuf Row C \n
+Upbuf[0] = (x+y)+(e+f) \n
+DownBuf[0] =(u+v) \n
+I hope you can see that by adding DownBuf to UpBuf you get the sum of e and its neighbors. \n
+If all the vaules were just boolean 0 for dead, 1 for alive \n
+As the Wikipedia article points out this sum tells the state that the cell e should be in. \n
 
-Okay but how does Upbuf come to contain the sum of the prior two?
-Its actually super similar to how the first stage of DownBufs calcutions worked.
-If we just used DownBuf Beta Stage, when we iter to a new row all the info stored it wouldn't be super helpful
-And also notice that once we find the state of cell that information in UpBuf becomes pointless and redudant as we
-write to array.
-This lets us store extra information in DownBuf before we overwrite with calcuation of neghibors.
-But to Free a cell in UpBuf we do need to do the calcution, which would overwrite ourdata.
-So instead we store the Sum of Row Neighbors in tempoary variable, call it LocSum.
+Okay but how does Upbuf come to contain the sum of the prior two? \n
+Its actually super similar to how the first stage of DownBufs calcutions worked. \n
+If we just used DownBuf Beta Stage, when we iter to a new row all the info stored it wouldn't be super helpful \n
+And also notice that once we find the state of cell that information in UpBuf becomes pointless and redudant as we \n
+write to array. \n
+This lets us store extra information in DownBuf before we overwrite with calcuation of neghibors. \n
+But to Free a cell in UpBuf we do need to do the calcution, which would overwrite ourdata. \n
+So instead we store the Sum of Row Neighbors in tempoary variable, call it LocSum. \n
 
-So we Add that to a cell in BufUp[n] and push that to the array.
-Then we store Locsum in BufUp.
-The extra values we've been storing in DownBuff are the prior rows (LocalSum), turns out it actually is useful
-We then *add* our LocSum To Bufdown[n] - which gives the sum of The current Row and the prior one
-So when iterate to the next row, this will be the sum of the prior two.
-Finally we Swap BufUp and BufDown, 
+So we Add that to a cell in BufUp[n] and push that to the array. \n
+Then we store Locsum in BufUp. \n
+The extra values we've been storing in DownBuff are the prior rows (LocalSum), turns out it actually is useful \n
+We then *add* our LocSum To Bufdown[n] - which gives the sum of The current Row and the prior one \n
+So when iterate to the next row, this will be the sum of the prior two. \n
+Finally we Swap BufUp and BufDown,  \n
 so that when start the next iteration BufUp holds The Sum of the prior two Rows and BufDown Holds the prior rows Locsums.
 (Also Loc Sum not BufDown[n+1] holds the vaule of CurrentRow[n], cause again its holding the result of calcutations)
-
-Illustration:
-⟰ =BufUp
-⟱ = BufDown
-
-
-Starting Values:
-A= x, y, z
-B= e, f, g
-C= u, v, w
-⟰ = [((x+y)+(e+f)), ((x+y+z)+(e+f+g)), ((y+z)+(f+g))]
-⟱ = [(e+f), (e+f+g), (f+g)]
-UpRow=B
-DownRow=C
-LocSum=0
-
-Step 1:
-
-LocSum = Locsum + C[0]+C[1] -> 0+u+v
-
-BufUp[0] = BufUp[0] +LocSum ->  ((x+y) +(e+f)) + (u+v)
-Write dervied bool from BufUp[0] to Array
-BufUp[0]= LocSum -> (u+v)
-BufDown[0] = BufDown[0]+LocSum -> (e+f)+(u+v)
-LocSum = C[0] -> u
-
-Buffer states end step 1:
-⟰  == [(u+v), ((x+y+z)+(e+f+g)), ((y+z)+(f+g))]
-⟱  == [((e+f)+(u+v)), (e+f+g), (f+g) ]
+\n \n
+Illustration: \n
+⟰ =BufUp \n
+⟱ = BufDown \n
 
 
-Step 2:
+Starting Values: \n
+A= x, y, z \n
+B= e, f, g \n
+C= u, v, w \n
+⟰ = [((x+y)+(e+f)), ((x+y+z)+(e+f+g)), ((y+z)+(f+g))] \
+⟱ = [(e+f), (e+f+g), (f+g)]\ 
+UpRow=B\ 
+DownRow=C\ 
+LocSum=0\ 
 
-LocSum = Locsum + C[1]+C[2] -> u + v + w
-BufUp[1] = BufUp[1] +LocSum ->  ((x+y+z) +(e+f+g)) + (u+v+w)
-Write dervied bool from BufUp[1] to Array
-BufUp[1]= LocSum -> (u+v+w)
-BufDown[1] = BufDown[1]+LocSum -> (e+f+g)+(u+v+w)
-LocSum = C[1] -> v
+Step 1:\
+
+LocSum = Locsum + C[0]+C[1] -> 0+u+v \
+
+BufUp[0] = BufUp[0] +LocSum ->  ((x+y) +(e+f)) + (u+v) \
+Write dervied bool from BufUp[0] to Array\
+BufUp[0]= LocSum -> (u+v)\
+BufDown[0] = BufDown[0]+LocSum -> (e+f)+(u+v) \
+LocSum = C[0] -> u\
+
+Buffer states end step 1: \
+⟰  == [(u+v), ((x+y+z)+(e+f+g)), ((y+z)+(f+g))] \
+⟱  == [((e+f)+(u+v)), (e+f+g), (f+g) ] \
 
 
-Buffer states end step 2:
-⟰  == [(u+v), (u+v+w), ((y+z)+(f+g))]
-⟱  == [((e+f)+(u+v)), ((e+f+g)+(u+v+w)), (f+g) ]
+Step 2:\
+
+LocSum = Locsum + C[1]+C[2] -> u + v + w \
+BufUp[1] = BufUp[1] +LocSum ->  ((x+y+z) +(e+f+g)) + (u+v+w) \
+Write dervied bool from BufUp[1] to Array \
+BufUp[1]= LocSum -> (u+v+w) \
+BufDown[1] = BufDown[1]+LocSum -> (e+f+g)+(u+v+w) \
+LocSum = C[1] -> v \
 
 
-Step 3:
-LocSum = Locsum + C[2]+C[3]  -> v + w + 0
-BufUp[2] = BufUp[2] +LocSum ->  ((y+z) +(f+g)) + (v+w)
-Write dervied bool from BufUp[2] to Array
-BufUp[2]= LocSum -> (v+w)
-BufDown[2] = BufDown[2]+LocSum -> (f+g)+(v+w)
+Buffer states end step 2:\ 
+⟰  == [(u+v), (u+v+w), ((y+z)+(f+g))]\
+⟱  == [((e+f)+(u+v)), ((e+f+g)+(u+v+w)), (f+g) ] \
+
+
+Step 3:\
+LocSum = Locsum + C[2]+C[3]  -> v + w + 0  \
+BufUp[2] = BufUp[2] +LocSum ->  ((y+z) +(f+g)) + (v+w)  \
+Write dervied bool from BufUp[2] to Array  \
+BufUp[2]= LocSum -> (v+w)  \
+BufDown[2] = BufDown[2]+LocSum -> (f+g)+(v+w) \
 LocSum = C[2] -> w
 
-Buffer states end step 3:
-⟰  == [(u+v), (u+v+w), ((y+z)+(f+g)]
-⟱  == [((e+f)+(u+v)), ((e+f+g)+(u+v+w)), ((f+g)+(v+w)) ]
+Buffer states end step 3:  \
+⟰  == [(u+v), (u+v+w), ((y+z)+(f+g)]  \
+⟱  == [((e+f)+(u+v)), ((e+f+g)+(u+v+w)), ((f+g)+(v+w)) ]  \
 
 
 
