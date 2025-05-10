@@ -31,6 +31,8 @@ class LinkedList(ILinkedList[T]):
         ll.head= ll.Node(None)
         ll.tail = ll.head
         for n in sequence:
+            if not(isinstance(n,data_type)):
+                raise TypeError
             ll.tail = ll.Node(n,previous=ll.tail)
             ll.tail.previous.next=ll.tail
             ll.__length +=1
@@ -42,8 +44,10 @@ class LinkedList(ILinkedList[T]):
             raise IndexError
     
     def TypeCheck(self, item): #really I want these both to be macros not functions - <3
+        print(item, self.__data_type)
         if not isinstance(item, self.__data_type):
-            raise TypeError
+            raise TypeError ("Wrong type for thislist")
+        return
 
 
     def append(self, item: T) -> None:
@@ -57,7 +61,6 @@ class LinkedList(ILinkedList[T]):
             postfix_node.previous = self.tail
             self.tail.next = postfix_node
             self.__length += 1
-
 
     def prepend(self, item: T) -> None:
         self.TypeCheck(item)
@@ -160,12 +163,12 @@ class LinkedList(ILinkedList[T]):
     
     @property
     def empty(self) -> bool:
-        return bool(self.__length)
-    
+        return self.__length ==0
+
+
     @property
     def count(self):
         return (self.__length)
-
     @property 
     def dtype(self):
         return self.__data_type
@@ -175,9 +178,9 @@ class LinkedList(ILinkedList[T]):
         return self.__length
 
     def clear(self) -> None:
-        self.head = None
         self.tail = None
-        self.__length = 0
+        self.head = None
+        self.__length =0
 
     def __contains__(self, item: T) -> bool:
         bIn = False
@@ -197,22 +200,25 @@ class LinkedList(ILinkedList[T]):
         hold = self.cur_node.data
         self.cur_node = self.cur_node.next
         return hold
-    
+
+
+
     def __reversed__(self) -> ILinkedList[T]:
-        raise NotImplementedError("LinkedList.__reversed__ is not implemented")
-    
+        cur_node = self.tail
+        while cur_node.previous != None:
+            yield cur_node.data
+            cur_node = cur_node.previous
+        return self
+
     def __eq__(self, other: object) -> bool:
         if ((not isinstance(other, LinkedList)) or
-        self.dtype != other.dtype or
-        self.count != other.count 
-        ):
+        (self.dtype != other.dtype) or 
+        self.count != other.count ):
             return False
         bEq = False
         for i in zip(self, other):
             bEq = (i[0] == i[1]) or bEq
         return bEq
-            
-
     def __str__(self) -> str:
         items = []
         current = self.head
@@ -227,7 +233,7 @@ class LinkedList(ILinkedList[T]):
         while current:
             items.append(repr(current.data))
             current = current.next
-        return f"LinkedList({' <-> '.join(items)}) Count: {self.count}"
+        return f"LinkedList({' <-> '.join(items)})"
 
 
 if __name__ == '__main__':
