@@ -20,6 +20,7 @@ class LinkedList(ILinkedList[T]):
         previous: Optional[LinkedList.Node] = None
     def __init__(self, data_type: type = object) -> None:
         self.head = None
+        self.tail =None
         self.__length = 0
         self.__data_type = data_type
         self.cur_node = self.head
@@ -44,7 +45,6 @@ class LinkedList(ILinkedList[T]):
             raise IndexError
     
     def TypeCheck(self, item): #really I want these both to be macros not functions - <3
-        print(item, self.__data_type)
         if not isinstance(item, self.__data_type):
             raise TypeError ("Wrong type for thislist")
         return
@@ -60,6 +60,7 @@ class LinkedList(ILinkedList[T]):
         else:
             postfix_node.previous = self.tail
             self.tail.next = postfix_node
+            self.tail = postfix_node
             self.__length += 1
 
     def prepend(self, item: T) -> None:
@@ -119,6 +120,8 @@ class LinkedList(ILinkedList[T]):
     def remove(self, item: T) -> None:
         self.TypeCheck(item)
         cur_node = self.head
+        if cur_node == None:
+            raise ValueError
         while cur_node.data != item:
             cur_node = cur_node.next
             if cur_node == None:
@@ -140,6 +143,7 @@ class LinkedList(ILinkedList[T]):
         self.__length -= 1
         if self.__length > 0:
             self.tail.next = None
+
         return popped.data
     # these two obvs do very similar things, so one might wanna genralize them to one func
     #not doing that cause it hurts readbilty
@@ -186,7 +190,6 @@ class LinkedList(ILinkedList[T]):
         bIn = False
         for i in self:
             bIn = (i == item) or bIn
-        print(bIn, self)
         return bIn
     
 
