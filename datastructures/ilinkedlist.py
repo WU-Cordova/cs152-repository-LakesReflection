@@ -3,10 +3,11 @@ from abc import abstractmethod
 import abc
 import os
 from typing import Sequence, TypeVar
+import typing
 
 T = TypeVar('T')
 
-class ILinkedList[T](abc.ABC):
+class ILinkedList(abc.ABC, typing.Generic[T]):
 
     '''The `ILinkedList` interface defines a set of methods that a linked list data structure 
         should implement. This interface is designed to be generic, allowing it to work with any data type. 
