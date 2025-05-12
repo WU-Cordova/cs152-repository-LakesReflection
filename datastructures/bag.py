@@ -27,7 +27,7 @@ class Bag(IBag[T]):
         return curlen
 
     def distinct_items(self) -> Iterable[T]:
-        return list(self._dict)
+        return (self._dict.keys())
     def __contains__(self, item) -> bool:
        return item in self._dict
     def clear(self) -> None:

@@ -38,8 +38,7 @@ def main():
         return (Array2D(starting_sequence=BeginSeq,data_type=bool))
     
     def screenInit():
-        ansi(str(GameRows+1)+";1H") 
-        print('''n,m <Enter> -- Make n steps waiting m seconds, -1 for automatic, quit to quit''')
+        ansi(str(GameRows+1)+";1H")  
         ansi("3J", #clears scnreen
              "?1049h", #alt screen enable
              "?25l", #hides cursor
